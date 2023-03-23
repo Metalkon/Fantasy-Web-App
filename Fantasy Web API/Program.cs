@@ -1,3 +1,6 @@
+using Fantasy_Web_API.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace Fantasy_Web_API
 {
     public class Program
@@ -7,6 +10,12 @@ namespace Fantasy_Web_API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                var configuration = builder.Configuration.GetSection("ConnectionStrings");
+                options.UseSqlServer(configuration["DefaultConnection"]);
+            });
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
