@@ -36,7 +36,7 @@ namespace Fantasy_Web_API.Controllers
         // Retrieves a single item by id as a JSON response.
         [HttpGet]
         [Route("{id}")]
-        public async Task<ActionResult<IEnumerable<ItemDTO>>> GetItemById(int id)
+        public async Task<ActionResult<ItemDTO>> GetItemById(int id)
         {
             var result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
             if (result == null)
