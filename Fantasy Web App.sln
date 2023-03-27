@@ -5,9 +5,9 @@ VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fantasy Web API", "Fantasy Web API\Fantasy Web API.csproj", "{3220AC2F-CC5B-4DB7-88D4-D63FE0F90B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fantasy Blazor", "Fantasy Blazor\Fantasy Blazor.csproj", "{760711E5-B437-46B9-96E2-C3E8B1BA825D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fantasy Blazor", "Fantasy Blazor\Fantasy Blazor.csproj", "{760711E5-B437-46B9-96E2-C3E8B1BA825D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared Classes", "Shared Classes\Shared Classes.csproj", "{3F6DE398-995E-4238-8C07-2F1165A4D4B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared Classes", "Shared Classes\Shared Classes.csproj", "{3F6DE398-995E-4238-8C07-2F1165A4D4B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
