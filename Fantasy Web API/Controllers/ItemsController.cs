@@ -28,6 +28,7 @@ namespace Fantasy_Web_API.Controllers
             // Check & Set Page Number/Size
             pageNumber = pageNumber <= 0 ? 1 : pageNumber;
             pageSize = pageSize <= 0 ? 10 : pageSize;
+            pageSize = pageSize > 100 ? 100 : pageSize;
 
             // Create the Queryable 
             IQueryable<Item> queryItem = _db.Items.AsQueryable();
