@@ -3,4 +3,111 @@
 
 <h2 style="text-align:center; margin-bottom: 2%">Item Management Page</h2>
 
-<Fantasy_Blazor.Pages.Components.ItemTable/>
+<!-- Display Page State -->
+@switch (pageState)
+{
+    // Display Loading
+    case 1: 
+        <img src="./images/KnightRun.gif" alt="Image" style="display: block; margin: 0 auto;"/>
+        <p style="text-align:center;">@message</p>
+        break;
+    // Display Error
+    case 2:
+        <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
+        <p style="text-align:center;">@message</p>
+        break;
+    // Display CreateItem Component
+    case 3:
+        //<Fantasy_Blazor.Pages.Components.ItemCreate/>
+        break;
+    // Display EditItem Component
+    case 4:
+        //<Fantasy_Blazor.Pages.Components.ItemEdit/>
+        break;
+    // Display Item Table
+    default:
+        <table class="table table-bordered table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Rarity</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th style="width: 1%">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td style="width: 1%;">
+                            @if (!string.IsNullOrEmpty(item.Image))
+                            {
+                                <img src="@item.Image">
+                            }
+                            else
+                            {
+                                <img src="~/image/icon/question_mark.jpg" alt="Question Mark" />
+                            }
+                        </td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Name</td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Rarity</td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Price</td>
+                        <td style="vertical-align: middle;">@item.Description</td>
+                        <td style="width: 1%; vertical-align: middle;">
+                            <div class="text-center d-inline-flex">
+                                <!-- Edit Button -->
+                                <button class="btn btn-primary rounded" @onclick="@(() => EditItem(item.Id))" style="margin-right: 5px">Edit</button>
+                                <!-- Delete Button -->
+                                <button class="btn btn-danger rounded" @onclick="@(() => DeleteItem(item.Id))">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        break;
+}
+
+<!-- NOTE: Add Full CRUD Capabilits & Pagination-->
+
+@code {
+    private int pageState;
+    private string message;
+    private List<ItemDTO> items = new List<ItemDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            pageState = 1;
+            message = "Loading Item Table...";
+            var client = new HttpClient();
+            items = await client.GetFromJsonAsync<List<ItemDTO>>("https://localhost:7000/api/Items");
+            if (items != null)
+            {
+                pageState = 0;
+                message = "";
+            }
+            else
+            {
+                pageState = 2;
+                message = "Error loading items. The requested table returned as null.";
+            }
+        }
+        catch (Exception ex)
+        {
+            pageState = 2;
+            message = "Error loading items. Please try again.";
+        }
+    }
+    private async Task EditItem(int itemId)
+    {
+        // TODO: Implement edit logic
+    }
+    private async Task DeleteItem(int itemId)
+    {
+        // TODO: Implement delete logic
+    }
+}
