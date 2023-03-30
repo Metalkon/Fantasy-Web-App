@@ -21,15 +21,42 @@ namespace Fantasy_Web_API.Controllers
             _db = context;
         }
 
-        // Retrieves a list of all "items" from the database as a JSON response.
+        // Retrieves a list of "items" from the database as a JSON response.
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ItemDTO>>> GetAllItems()
+        public async Task<ActionResult<IEnumerable<ItemDTO>>> GetItems(int pageNumber, int pageSize, string? searchQuery)
         {
-            var result = await _db.Items.ToListAsync();
-            if (result == null)
+            // Check & Set Page Number/Size
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            // Create the Queryable 
+            IQueryable<Item> queryItem = _db.Items.AsQueryable();
+
+            // Null check and search for the name
+            if (searchQuery != null)
+            {
+                queryItem = queryItem.Where(item => item.Name.Contains(searchQuery));
+            }
+
+            // Apply pagination
+            var items = await queryItem.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            if (items.Count == 0)
             {
                 return NotFound();
             }
+
+            // Convert each item in the original list to an ItemDTO and add it to a new list.
+            var result = items.Select(item => new ItemDTO
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Rarity = item.Rarity,
+                Price = item.Price,
+                Description = item.Description,
+                Image = item.Image
+            }).ToList();
+
             return Ok(result);
         }
 
