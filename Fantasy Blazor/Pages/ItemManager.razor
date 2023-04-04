@@ -26,6 +26,10 @@
         break;
     // Display Item Table
     default:
+        <div style="display: flex; padding-bottom: 10px; padding-top: 10px;">
+            <input id="nameInput" type="text" style="margin-right: 5px" @bind-value="searchQuery" />
+            <button class="btn btn-primary" @onclick="ItemSearch">Search</button>
+        </div>
         <table class="table table-bordered table-striped" style="width:100%">
             <thead>
                 <tr>
