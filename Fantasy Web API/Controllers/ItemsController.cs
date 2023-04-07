@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
+using Shared_Classes.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Text.RegularExpressions;
 
 namespace Fantasy_Web_API.Controllers
 {
@@ -23,8 +26,20 @@ namespace Fantasy_Web_API.Controllers
 
         // Retrieves a list of "items" from the database as a JSON response.
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ItemDTO>>> GetItems(int pageNumber, int pageSize, string? searchQuery)
+        public async Task<ActionResult<IEnumerable<ItemSearchResponse<ItemDTO>>>> GetItems(int pageNumber, int pageSize, string? searchQuery, int pageId)
         {
+            // Check for negative numbers
+            if (pageNumber < 0 || pageSize < 0 || pageId < 0)
+            {
+                return BadRequest();
+            }
+
+            // Check for special characters in the searchQuery parameter
+            if (searchQuery != null && !Regex.IsMatch(searchQuery, @"^[a-zA-Z0-9\s]+$"))
+            {
+                return BadRequest();
+            }
+
             // Check & Set Page Number/Size
             pageNumber = pageNumber <= 0 ? 1 : pageNumber;
             pageSize = pageSize <= 0 ? 10 : pageSize;
@@ -33,6 +48,9 @@ namespace Fantasy_Web_API.Controllers
             // Create the Queryable 
             IQueryable<Item> queryItem = _db.Items.AsQueryable();
 
+            // Add a filter for the pageId value
+            //queryItem = _db.Items.Where(item => item.Id > pageId);
+
             // Null check and search for the name
             if (searchQuery != null)
             {
@@ -40,26 +58,35 @@ namespace Fantasy_Web_API.Controllers
             }
 
             // Apply pagination
-            var items = await queryItem.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            queryItem = queryItem.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+            // Retrieve items from the database
+            var items = await queryItem.ToListAsync();
 
             if (items.Count == 0)
             {
                 return NotFound();
             }
 
-            // Convert each item in the original list to an ItemDTO and add it to a new list.
-            var result = items.Select(item => new ItemDTO
+            // Convert each item in the original item list to a ItemDTO within another object, and setting PageId to the highest item.Id
+            var result = new ItemSearchResponse<ItemDTO>
             {
-                Id = item.Id,
-                Name = item.Name,
-                Rarity = item.Rarity,
-                Price = item.Price,
-                Description = item.Description,
-                Image = item.Image
-            }).ToList();
+                PageId = items.Max(item => item.Id),
+                Data = items.Select(item => new ItemDTO
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Rarity = item.Rarity,
+                    Price = item.Price,
+                    Description = item.Description,
+                    Image = item.Image
+                }).ToList()
+            };
 
             return Ok(result);
         }
+
+
 
         // Retrieves a single item by id as a JSON response.
         [HttpGet]

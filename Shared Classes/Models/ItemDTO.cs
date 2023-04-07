@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Fantasy_Web_API.Models
+namespace Shared_Classes.Models
 {
     public class ItemDTO
     {
