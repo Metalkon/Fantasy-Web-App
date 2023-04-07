@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
+using Shared_Classes.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Text.RegularExpressions;
 
 namespace Fantasy_Web_API.Controllers
 {
@@ -21,17 +24,69 @@ namespace Fantasy_Web_API.Controllers
             _db = context;
         }
 
-        // Retrieves a list of all "items" from the database as a JSON response.
+        // Retrieves a list of "items" from the database as a JSON response.
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ItemDTO>>> GetAllItems()
+        public async Task<ActionResult<IEnumerable<ItemSearchResponse<ItemDTO>>>> GetItems(int pageNumber, int pageSize, string? searchQuery, int pageId)
         {
-            var result = await _db.Items.ToListAsync();
-            if (result == null)
+            // Check for negative numbers
+            if (pageNumber < 0 || pageSize < 0 || pageId < 0)
+            {
+                return BadRequest();
+            }
+
+            // Check for special characters in the searchQuery parameter
+            if (searchQuery != null && !Regex.IsMatch(searchQuery, @"^[a-zA-Z0-9\s]+$"))
+            {
+                return BadRequest();
+            }
+
+            // Check & Set Page Number/Size
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+            pageSize = pageSize > 100 ? 100 : pageSize;
+
+            // Create the Queryable 
+            IQueryable<Item> queryItem = _db.Items.AsQueryable();
+
+            // Add a filter for the pageId value
+            //queryItem = _db.Items.Where(item => item.Id > pageId);
+
+            // Null check and search for the name
+            if (searchQuery != null)
+            {
+                queryItem = queryItem.Where(item => item.Name.Contains(searchQuery));
+            }
+
+            // Apply pagination
+            queryItem = queryItem.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+            // Retrieve items from the database
+            var items = await queryItem.ToListAsync();
+
+            if (items.Count == 0)
             {
                 return NotFound();
             }
+
+            // Convert each item in the original item list to a ItemDTO within another object, and setting PageId to the highest item.Id
+            var result = new ItemSearchResponse<ItemDTO>
+            {
+                PageId = items.Max(item => item.Id),
+                Data = items.Select(item => new ItemDTO
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Rarity = item.Rarity,
+                    Price = item.Price,
+                    Description = item.Description,
+                    Image = item.Image
+                }).ToList()
+            };
+
             return Ok(result);
         }
+
+
 
         // Retrieves a single item by id as a JSON response.
         [HttpGet]
