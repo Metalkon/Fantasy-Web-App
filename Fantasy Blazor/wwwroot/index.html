@@ -12,12 +12,19 @@
 </head>
 
 <body>
-    <div id="app">Loading...</div>
+    <div id="app">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <img src="./images/KnightRun.gif" alt="Image" style="display: block; margin: 0 auto;"/> 
+            <p style="text-align:center;">Loading Fantasy Blazor App...</p>
+            <div id="blazor-progress-bar"></div>
+        </div>
+    </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        <img src="./images/KnightFall.gif" alt="Loading" style="display: block; margin: 0 auto;"/>
+        <p style="text-align: center;">An unhandled error has occurred.</p>
+        <a style="text-align: center;" href="" class="reload">Reload</a>
+        <a style="text-align: center;" class="dismiss">🗙</a>
     </div>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>

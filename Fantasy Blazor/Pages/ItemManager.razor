@@ -1,0 +1,207 @@
+﻿@using Shared_Classes.Models
+@page "/ItemManager"
+
+<h2 style="text-align:center; margin-bottom: 2%">Item Management Page</h2>
+
+<!-- Display Page State -->
+@switch (pageState)
+{
+    // Display Loading
+    case 1: 
+        <img src="./images/KnightRun.gif" alt="Image" style="display: block; margin: 0 auto;"/>
+        <p style="text-align:center;">@message</p>
+        break;
+    // Display Error
+    case 2:
+        <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
+        <p style="text-align:center;">@message</p>
+        <!-- Pagination -->
+        <div style="display: flex; justify-content: center; align-items: center;">
+            @if (pageNumber > 1)
+            {
+                <a class="page-link" @onclick="PreviousPage">Previous</a>
+            }
+            else
+            {
+                <a class="page-link">Previous</a>
+            }
+            <a class="page-link">@pageNumber</a>
+            <a class="page-link">Next</a>
+        </div>
+        break;
+    // Display CreateItem Component
+    case 3:
+        //<Fantasy_Blazor.Pages.Components.ItemCreate/>
+        break;
+    // Display EditItem Component
+    case 4:
+        //<Fantasy_Blazor.Pages.Components.ItemEdit/>
+        break;
+    // Display Item Table
+    default:
+        <div style="display: flex; padding-bottom: 10px; padding-top: 10px;">
+            <input id="nameInput" type="text" style="margin-right: 5px" @bind-value="searchInput"/>
+            <button class="btn btn-primary" @onclick="@(() => NameSearch(searchInput))">Search</button>
+        </div>
+        <table class="table table-bordered table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Rarity</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th style="width: 1%">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td style="width: 1%;">
+                            @if (!string.IsNullOrEmpty(item.Image))
+                            {
+                                <img src="@item.Image">
+                            }
+                            else
+                            {
+                                <img src="~/image/icon/question_mark.jpg" alt="Question Mark" />
+                            }
+                        </td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Name</td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Rarity</td>
+                        <td style="width: 15%; vertical-align: middle;">@item.Price</td>
+                        <td style="vertical-align: middle;">@item.Description</td>
+                        <td style="width: 1%; vertical-align: middle;">
+                            <div class="text-center d-inline-flex">
+                                <!-- Edit Button -->
+                                <button class="btn btn-primary rounded" @onclick="@(() => EditItem(item.Id))" style="margin-right: 5px">Edit</button>
+                                <!-- Delete Button -->
+                                <button class="btn btn-danger rounded" @onclick="@(() => DeleteItem(item.Id))">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <!-- Pagination -->
+        <div style="display: flex; justify-content: center; align-items: center;">
+            @if (pageNumber > 1)
+            {
+                <a class="page-link" @onclick="PreviousPage">Previous</a>
+            }
+            else
+            {
+                <a class="page-link">Previous</a>
+            }
+            <a class="page-link">@pageNumber</a>
+            @if (items.Count < 5)
+            {
+                <a class="page-link">Next</a>
+
+            }
+            else
+            {
+                <a class="page-link" @onclick="NextPage">Next</a>
+            }
+        </div>
+        break;
+}
+
+<!-- NOTE: Add Full CRUD Capabilits & Pagination-->
+
+@code {
+    private int pageState;
+    private string message;
+    private int pageNumber = 1;
+    private int pageSize = 5;
+    private string searchInput;
+    private string searchQuery = "";
+    private int pageId = 0;
+    private List<int> pageHistory = new List<int>();
+    private List<ItemDTO> items = new List<ItemDTO>();
+    private HttpClient client = new HttpClient();
+
+    protected override async Task OnInitializedAsync()
+    {
+        pageState = 1;
+        message = "Loading Item Table...";
+        await ItemSearch();
+    }
+
+    private async Task NameSearch(string searchInput)
+    {
+        searchQuery = searchInput;
+        //pageId = 0;
+        pageNumber = 1;
+        await ItemSearch();
+    }
+
+    // Item Table Search
+    private async Task ItemSearch()
+    {
+        try
+        {
+            var result = await client.GetFromJsonAsync<ItemSearchResponse<ItemDTO>>($"https://localhost:7000/api/Items?pageNumber={pageNumber}&pageSize={pageSize}&searchQuery={searchQuery}&pageID={pageId}");
+            if (items != null)
+            {
+                //pageId = result.PageId;
+                items = result.Data.ToList();
+                pageState = 0;
+                message = "";
+            }
+            else
+            {
+                pageState = 2;
+                message = "Error loading items. The requested table returned as null.";
+            }
+        }
+        catch (Exception ex)
+        {
+            pageState = 2;
+            message = "Error loading items. Please try again.";
+        }
+    }
+
+    private async Task EditItem(int itemId)
+    {
+        // TODO: Implement edit logic
+    }
+    private async Task DeleteItem(int itemId)
+    {
+        // TODO: Implement delete logic
+    }
+
+    private async Task PreviousPage()
+    {
+        pageNumber--;
+        /*
+        if (pageHistory[pageNumber - 1] != null)
+            {
+            pageId = pageHistory[pageNumber - 1];
+        }*/
+        await ItemSearch();
+    }
+    private async Task NextPage()
+    {
+        /*
+        // If next page history has no history, then save the current pageid history
+        if (pageNumber + 1 >= pageHistory.Count)
+        {
+            pageHistory.Add(pageId);
+        }*/
+        pageNumber++;
+        /*
+        // if new page has history, set pageid before the search
+        if (pageNumber < pageHistory.Count)
+        {
+            pageId = pageHistory[pageNumber - 1];
+        }*/
+        await ItemSearch();
+    }
+
+    private async Task GoToPage(int i)
+    {
+        // TODO: Implement go-to-page logic
+    }
+}
