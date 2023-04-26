@@ -169,7 +169,8 @@
     }
     private async Task DeleteItem(int itemId)
     {
-        // TODO: Implement delete logic
+        await client.DeleteAsync($"https://localhost:7000/api/Items/{itemId}");
+        await ItemSearch();
     }
 
     private async Task PreviousPage()
