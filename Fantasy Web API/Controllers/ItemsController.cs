@@ -109,12 +109,29 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest();
             }
+
+            // Check for nulls and set a default
+            item.Name = item.Name == null ? "Untitled" : item.Name;
+            item.Description = item.Description == null ? "N/A" : item.Description;
+            item.Price = item.Price == null ? 0 : item.Price;
+            item.Rarity = item.Rarity == null ? "Common" : item.Rarity;
+            item.Image = item.Image == null ? "./images/Icon/Question_Mark.jpg" : item.Image;
+
+            // Create new Item object using the ItemDTO
             var newItem = new Item()
             {
-                Name = item.Name
+                Name = item.Name,
+                Rarity = item.Rarity,
+                Price = (int)item.Price,
+                Description = item.Description,
+                Image = item.Image
             };
+
+            // Add newItem to Database
             _db.Items.Add(newItem);
             await _db.SaveChangesAsync();
+
+            // Return Success
             var newItemDTO = new ItemDTO()
             {
                 Id = newItem.Id,
