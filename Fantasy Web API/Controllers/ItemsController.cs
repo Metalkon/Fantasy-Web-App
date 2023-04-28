@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
 using Shared_Classes.Models;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Text.RegularExpressions;
 
 namespace Fantasy_Web_API.Controllers
@@ -48,9 +42,6 @@ namespace Fantasy_Web_API.Controllers
             // Create the Queryable 
             IQueryable<Item> queryItem = _db.Items.AsQueryable();
 
-            // Add a filter for the pageId value
-            //queryItem = _db.Items.Where(item => item.Id > pageId);
-
             // Null check and search for the name
             if (searchQuery != null)
             {
@@ -82,11 +73,8 @@ namespace Fantasy_Web_API.Controllers
                     Image = item.Image
                 }).ToList()
             };
-
             return Ok(result);
         }
-
-
 
         // Retrieves a single item by id as a JSON response.
         [HttpGet]

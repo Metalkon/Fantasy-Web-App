@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Shared Classes\Shared Classes.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Pages\Components\" />
+  </ItemGroup>
+
 </Project>

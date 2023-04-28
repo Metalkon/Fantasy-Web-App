@@ -23,7 +23,7 @@ namespace Fantasy_Web_API
                 policy.AllowAnyMethod();
                 policy.AllowAnyOrigin();
             })
-);
+            );
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

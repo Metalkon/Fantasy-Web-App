@@ -87,12 +87,10 @@
             <span style="color: red; font-size: 12px;">@req</span>
         </div>
         break;
-
     case 5:
         <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
         <p style="text-align:center;">@message</p>
         <button class="btn btn-primary" @onclick="@(() => CreateItem())">Return</button>
-
         break;
     // Display Item Table
     default:
@@ -102,8 +100,6 @@
             <div style="flex: 1;"></div> <!-- This creates an empty div to fill the remaining space -->
             <button class="btn btn-primary" style="float: right;" @onclick="@(() => CreateItem())">Create Item</button>
         </div>
-
-
         <table class="table table-bordered table-striped" style="width:100%">
             <thead>
                 <tr>
@@ -186,14 +182,11 @@
     private ItemDTO createItem = new ItemDTO();
     private ItemDTO editItem = new ItemDTO();
 
-
     protected override async Task OnInitializedAsync()
     {
         pageState = 1;
         message = "Loading Item Table...";
         await ItemSearch();
-
-
     }
 
     private async Task NameSearch(string searchInput)
@@ -229,12 +222,14 @@
             message = "Error loading items. Please try again.";
         }
     }
+
     private async Task CreateItem()
     {
         req = null;
         createItem = new ItemDTO() { Image = "./images/Icon/Question_Mark.jpg" };
         pageState = 3;
     }
+
     private async Task CreateItem(ItemDTO createItem)
     {
         if (createItem.Name == null || createItem.Description == null || createItem.Rarity == null)
@@ -310,28 +305,11 @@
     private async Task PreviousPage()
     {
         pageNumber--;
-        /*
-        if (pageHistory[pageNumber - 1] != null)
-            {
-            pageId = pageHistory[pageNumber - 1];
-        }*/
         await ItemSearch();
     }
     private async Task NextPage()
     {
-        /*
-        // If next page history has no history, then save the current pageid history
-        if (pageNumber + 1 >= pageHistory.Count)
-            {
-            pageHistory.Add(pageId);
-        }*/
         pageNumber++;
-        /*
-        // if new page has history, set pageid before the search
-        if (pageNumber < pageHistory.Count)
-            {
-            pageId = pageHistory[pageNumber - 1];
-        }*/
         await ItemSearch();
     }
 
