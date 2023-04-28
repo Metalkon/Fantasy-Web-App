@@ -60,7 +60,32 @@
         break;
     // Display EditItem Component
     case 4:
-        //<Fantasy_Blazor.Pages.Components.ItemEdit/>
+        <h3>Edit Item</h3>
+        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+            <label style="margin-bottom: 5px; font-weight: bold;">Name:<span style="color: gray; font-size: 12px;"> (Required)</span></label>
+            <input type="text" style="width: 50%;" @bind-value="editItem.Name" />
+        </div>
+        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+            <label style="margin-bottom: 5px; font-weight: bold;">Rarity:<span style="color: gray; font-size: 12px;"> (Required)</span></label>
+            <input type="text" style="width: 50%;" @bind-value="editItem.Rarity" />
+        </div>
+        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+            <label style="margin-bottom: 5px; font-weight: bold;">Description:<span style="color: gray; font-size: 12px;"> (Required)</span></label>
+            <input type="text" style="width: 50%;" @bind-value="editItem.Description" />
+        </div>
+        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+            <label style="margin-bottom: 5px; font-weight: bold;">Price:</label>
+            <input type="text" style="width: 50%;" @bind-value="editItem.Price" />
+        </div>
+        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+            <label style="margin-bottom: 5px; font-weight: bold;">Image:</label>
+            <input type="text" style="width: 50%;" @bind-value="editItem.Image" placeholder="./images/Icon/Question_Mark.jpg" />
+        </div>
+        <button class="btn btn-primary" @onclick="@(() => EditItemSave(editItem))">Save Changes</button>
+        <button class="btn btn-primary" @onclick="@(() => Back())">Back</button>
+        <div>
+            <span style="color: red; font-size: 12px;">@req</span>
+        </div>
         break;
 
     case 5:
@@ -159,6 +184,7 @@
     private List<ItemDTO> items = new List<ItemDTO>();
     private HttpClient client = new HttpClient();
     private ItemDTO createItem = new ItemDTO();
+    private ItemDTO editItem = new ItemDTO();
 
 
     protected override async Task OnInitializedAsync()
@@ -229,13 +255,52 @@
             pageState = 5;
             message = "Error creating new item";
         }
-
     }
 
     private async Task EditItem(int itemId)
     {
-        // TODO: Implement edit logic
+        try
+        {
+            editItem = await client.GetFromJsonAsync<ItemDTO>($"https://localhost:7000/api/Items/{itemId}");
+            if (editItem != null)
+            {
+                pageState = 4;
+                message = "";
+            }
+            else
+            {
+                pageState = 2;
+                message = "Error loading item. The requested item returned as null.";
+            }
+        }
+        catch (Exception ex)
+        {
+            pageState = 2;
+            message = "Error loading item. Please try again.";
+        }
     }
+
+    private async Task EditItemSave(ItemDTO editItem)
+    {
+        if (editItem.Name == null || editItem.Description == null || editItem.Rarity == null)
+        {
+            req = "Please fill out all required input fields";
+            return;
+        }
+        var response = await client.PutAsJsonAsync("https://localhost:7000/api/Items", editItem);
+        if (response.IsSuccessStatusCode)
+        {
+            pageState = 0;
+            req = null;
+            await ItemSearch();
+        }
+        else
+        {
+            pageState = 5;
+            message = "Error editing item";
+        }
+    }
+
     private async Task DeleteItem(int itemId)
     {
         await client.DeleteAsync($"https://localhost:7000/api/Items/{itemId}");

@@ -93,11 +93,20 @@ namespace Fantasy_Web_API.Controllers
         [Route("{id}")]
         public async Task<ActionResult<ItemDTO>> GetItemById(int id)
         {
-            var result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
-            if (result == null)
+            var itemGet = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            if (itemGet == null)
             {
                 return NotFound();
             }
+            var result = new ItemDTO()
+            {
+                Id = itemGet.Id,
+                Name = itemGet.Name,
+                Rarity = itemGet.Rarity,
+                Price = itemGet.Price,
+                Description = itemGet.Description,
+                Image = itemGet.Image
+            };
             return Ok(result);
         }
 
@@ -157,19 +166,25 @@ namespace Fantasy_Web_API.Controllers
 
         // Updates a single item entry by id.
         [HttpPut]
-        [Route("{id}")]
-        public async Task<ActionResult<ItemDTO>> UpdateItemById(int id, ItemDTO item)
+        public async Task<ActionResult<ItemDTO>> UpdateItemById(ItemDTO item)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
-            var existingItem = await _db.Items.FindAsync(id);
+            var existingItem = await _db.Items.FindAsync(item.Id);
             if (existingItem == null)
             {
                 return NotFound();
             }
-            existingItem.Name = item.Name;
+            {
+                existingItem.Name = item.Name;
+                existingItem.Rarity = item.Rarity;
+                existingItem.Price = item.Price;
+                existingItem.Description = item.Description;
+                existingItem.Image = item.Image;
+            }
+
             await _db.SaveChangesAsync();
             var updatedItem = new ItemDTO()
             {
