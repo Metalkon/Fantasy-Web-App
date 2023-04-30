@@ -3,15 +3,15 @@
 
 <h2 style="text-align:center; margin-bottom: 2%">Item Management Page</h2>
 
-<!-- Display Page State -->
+<!-- Page State -->
 @switch (pageState)
 {
-    // Display Loading
-    case 1: 
-        <img src="./images/KnightRun.gif" alt="Image" style="display: block; margin: 0 auto;"/>
+    // DISPLAY: Loading
+    case 1:
+        <img src="./images/KnightRun.gif" alt="Image" style="display: block; margin: 0 auto;" />
         <p style="text-align:center;">@message</p>
         break;
-    // Display Error
+    // ERROR: No Pages Error
     case 2:
         <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
         <p style="text-align:center;">@message</p>
@@ -29,7 +29,7 @@
             <a class="page-link">Next</a>
         </div>
         break;
-    // Display CreateItem Component
+    // DISPLAY: CreateItem
     case 3:
         <h3>Create Item</h3>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
@@ -46,19 +46,19 @@
         </div>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
             <label style="margin-bottom: 5px; font-weight: bold;">Price:</label>
-            <input type="text" style="width: 50%;" @bind-value="createItem.Price" />
+            <input type="number" style="width: 50%;" @bind-value="createItem.Price" />
         </div>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
             <label style="margin-bottom: 5px; font-weight: bold;">Image:</label>
-            <input type="text" style="width: 50%;" @bind-value="createItem.Image" placeholder="./images/Icon/Question_Mark.jpg"  />
+            <input type="text" style="width: 50%;" @bind-value="createItem.Image" placeholder="./images/Icon/Question_Mark.jpg" />
         </div>
         <button class="btn btn-primary" @onclick="@(() => CreateItem(createItem))">Create</button>
         <button class="btn btn-primary" @onclick="@(() => Back())">Back</button>
-        <div>        
+        <div>
             <span style="color: red; font-size: 12px;">@req</span>
         </div>
         break;
-    // Display EditItem Component
+    // DISPLAY: EditItem
     case 4:
         <h3>Edit Item</h3>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
@@ -75,7 +75,7 @@
         </div>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
             <label style="margin-bottom: 5px; font-weight: bold;">Price:</label>
-            <input type="text" style="width: 50%;" @bind-value="editItem.Price" />
+            <input type="number" style="width: 50%;" @bind-value="editItem.Price" />
         </div>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
             <label style="margin-bottom: 5px; font-weight: bold;">Image:</label>
@@ -87,12 +87,19 @@
             <span style="color: red; font-size: 12px;">@req</span>
         </div>
         break;
+    // ERROR: CreateItem
     case 5:
         <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
         <p style="text-align:center;">@message</p>
         <button class="btn btn-primary" @onclick="@(() => CreateItem())">Return</button>
         break;
-    // Display Item Table
+    // ERROR: EditItem
+    case 6:
+        <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
+        <p style="text-align:center;">@message</p>
+        <button class="btn btn-primary" @onclick="@(() => EditItem(editItem.Id))">Return</button>
+        break;
+    // DISPLAY: Item Manager Table
     default:
         <div style="display: flex; padding-bottom: 10px; padding-top: 10px;">
             <input id="nameInput" type="text" style="margin-right: 5px" @bind-value="searchInput" />
@@ -163,10 +170,9 @@
             }
         </div>
         break;
-        }
+}
 
 <!-- NOTE: Add Full CRUD Capabilits & Pagination-->
-
 @code {
     private int pageState;
     private string message;
@@ -264,13 +270,13 @@
             }
             else
             {
-                pageState = 2;
+                pageState = 6;
                 message = "Error loading item. The requested item returned as null.";
             }
         }
         catch (Exception ex)
         {
-            pageState = 2;
+            pageState = 6;
             message = "Error loading item. Please try again.";
         }
     }
@@ -291,7 +297,7 @@
         }
         else
         {
-            pageState = 5;
+            pageState = 6;
             message = "Error editing item";
         }
     }

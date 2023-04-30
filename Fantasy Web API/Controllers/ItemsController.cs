@@ -4,6 +4,7 @@ using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
 using Shared_Classes.Models;
 using System.Text.RegularExpressions;
+using System.Drawing.Printing;
 
 namespace Fantasy_Web_API.Controllers
 {
@@ -106,6 +107,7 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest();
             }
+            item.Price = item.Price < 0 ? 0 : item.Price;
 
             // Check for nulls and set a default
             item.Name = item.Name == null ? "Untitled" : item.Name;
@@ -165,6 +167,7 @@ namespace Fantasy_Web_API.Controllers
             {
                 return NotFound();
             }
+            item.Price = item.Price < 0 ? 0 : item.Price;
             {
                 existingItem.Name = item.Name;
                 existingItem.Rarity = item.Rarity;
