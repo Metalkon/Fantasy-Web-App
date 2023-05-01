@@ -74,7 +74,7 @@ namespace Fantasy_Web_API.Controllers
         [Route("{id}")]
         public async Task<ActionResult<ItemDTO>> GetItemById(int id)
         {
-            var itemGet = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            Item itemGet = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
             if (itemGet == null)
             {
                 return NotFound();
@@ -130,7 +130,7 @@ namespace Fantasy_Web_API.Controllers
         [Route("{id}")]
         public async Task<ActionResult<ItemDTO>> DeleteItemById(int id)
         {
-            var result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            Item result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
             if (result == null)
             {
                 return NotFound();
@@ -148,7 +148,7 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest();
             }
-            var existingItem = await _db.Items.FindAsync(item.Id);
+            Item existingItem = await _db.Items.FindAsync(item.Id);
             if (existingItem == null)
             {
                 return NotFound();
