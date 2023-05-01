@@ -154,11 +154,11 @@ namespace Fantasy_Web_API.Controllers
             }
 
             // Check Values, Set Defaults
-            existingItem.Name = existingItem.Name == null ? "Untitled" : existingItem.Name;
-            existingItem.Description = existingItem.Description == null ? "N/A" : existingItem.Description;
-            existingItem.Price = existingItem.Price == null ? 0 : existingItem.Price;
-            existingItem.Rarity = existingItem.Rarity == null ? "Common" : existingItem.Rarity;
-            existingItem.Image = existingItem.Image == null ? "./images/Icon/Question_Mark.jpg" : existingItem.Image;
+            item.Name = item.Name == null ? "Untitled" : item.Name;
+            item.Description = item.Description == null ? "N/A" : item.Description;
+            item.Price = item.Price == null ? 0 : item.Price;
+            item.Rarity = item.Rarity == null ? "Common" : item.Rarity;
+            item.Image = item.Image == null ? "./images/Icon/Question_Mark.jpg" : item.Image;
 
             {
                 existingItem.Name = item.Name;
