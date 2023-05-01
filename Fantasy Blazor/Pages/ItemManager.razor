@@ -211,7 +211,7 @@
     {
         try
         {
-            var result = await client.GetFromJsonAsync<ItemSearchResponse<ItemDTO>>($"https://localhost:7000/api/Items?pageNumber={pageNumber}&pageSize={pageSize}&searchQuery={searchQuery}&pageID={pageId}");
+            ItemSearchResponse<ItemDTO> result = await client.GetFromJsonAsync<ItemSearchResponse<ItemDTO>>($"https://localhost:7000/api/Items?pageNumber={pageNumber}&pageSize={pageSize}&searchQuery={searchQuery}&pageID={pageId}");
             if (items != null)
             {
                 items = result.Data.ToList();

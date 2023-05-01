@@ -4,7 +4,6 @@ using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
 using Shared_Classes.Models;
 using System.Text.RegularExpressions;
-using System.Drawing.Printing;
 
 namespace Fantasy_Web_API.Controllers
 {
@@ -153,7 +152,14 @@ namespace Fantasy_Web_API.Controllers
             {
                 return NotFound();
             }
-            item.Price = item.Price < 0 ? 0 : item.Price;
+
+            // Check Values, Set Defaults
+            existingItem.Name = existingItem.Name == null ? "Untitled" : existingItem.Name;
+            existingItem.Description = existingItem.Description == null ? "N/A" : existingItem.Description;
+            existingItem.Price = existingItem.Price == null ? 0 : existingItem.Price;
+            existingItem.Rarity = existingItem.Rarity == null ? "Common" : existingItem.Rarity;
+            existingItem.Image = existingItem.Image == null ? "./images/Icon/Question_Mark.jpg" : existingItem.Image;
+
             {
                 existingItem.Name = item.Name;
                 existingItem.Rarity = item.Rarity;
