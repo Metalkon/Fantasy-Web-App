@@ -15,7 +15,7 @@
     case 2:
         <img src="./images/KnightFall.gif" alt="Image" style="display: block; margin: 0 auto;" />
         <p style="text-align:center;">@message</p>
-        <!-- Pagination -->
+        <!-- Pagination (Previous Only) -->
         <div style="display: flex; justify-content: center; align-items: center;">
             @if (pageNumber > 1)
             {
@@ -52,6 +52,7 @@
             <label style="margin-bottom: 5px; font-weight: bold;">Image:</label>
             <input type="text" style="width: 50%;" @bind-value="createItem.Image" placeholder="./images/Icon/Question_Mark.jpg" />
         </div>
+        // Save/Back Buttons
         <button class="btn btn-primary" @onclick="@(() => CreateItem(createItem))">Create</button>
         <button class="btn btn-primary" @onclick="@(() => Back())">Back</button>
         <div>
@@ -81,6 +82,7 @@
             <label style="margin-bottom: 5px; font-weight: bold;">Image:</label>
             <input type="text" style="width: 50%;" @bind-value="editItem.Image" placeholder="./images/Icon/Question_Mark.jpg" />
         </div>
+        // Save/Back Buttons
         <button class="btn btn-primary" @onclick="@(() => EditItemSave(editItem))">Save Changes</button>
         <button class="btn btn-primary" @onclick="@(() => Back())">Back</button>
         <div>
@@ -101,12 +103,14 @@
         break;
     // DISPLAY: Item Manager Table
     default:
+        // Search Query Input Box/Button
         <div style="display: flex; padding-bottom: 10px; padding-top: 10px;">
             <input id="nameInput" type="text" style="margin-right: 5px" @bind-value="searchInput" />
             <button class="btn btn-primary" @onclick="@(() => NameSearch(searchInput))">Search</button>
-            <div style="flex: 1;"></div> <!-- This creates an empty div to fill the remaining space -->
+            <div style="flex: 1;"></div>
             <button class="btn btn-primary" style="float: right;" @onclick="@(() => CreateItem())">Create Item</button>
         </div>
+        // Item Table
         <table class="table table-bordered table-striped" style="width:100%">
             <thead>
                 <tr>
@@ -138,9 +142,8 @@
                         <td style="vertical-align: middle;">@item.Description</td>
                         <td style="width: 1%; vertical-align: middle;">
                             <div class="text-center d-inline-flex">
-                                <!-- Edit Button -->
+                                <!-- Edit/Delete Buttons -->
                                 <button class="btn btn-primary rounded" @onclick="@(() => EditItem(item.Id))" style="margin-right: 5px">Edit</button>
-                                <!-- Delete Button -->
                                 <button class="btn btn-danger rounded" @onclick="@(() => DeleteItem(item.Id))">Delete</button>
                             </div>
                         </td>
@@ -148,7 +151,7 @@
                 }
             </tbody>
         </table>
-        <!-- Pagination -->
+        <!-- Pagination Buttons (Previous/Next) -->
         <div style="display: flex; justify-content: center; align-items: center;">
             @if (pageNumber > 1)
             {
@@ -172,7 +175,6 @@
         break;
 }
 
-<!-- NOTE: Add Full CRUD Capabilits & Pagination-->
 @code {
     private int pageState;
     private string message;
@@ -188,6 +190,7 @@
     private ItemDTO createItem = new ItemDTO();
     private ItemDTO editItem = new ItemDTO();
 
+    // Startup
     protected override async Task OnInitializedAsync()
     {
         pageState = 1;
@@ -195,10 +198,10 @@
         await ItemSearch();
     }
 
+    // Input Search Query
     private async Task NameSearch(string searchInput)
     {
         searchQuery = searchInput;
-        //pageId = 0;
         pageNumber = 1;
         await ItemSearch();
     }
@@ -208,10 +211,9 @@
     {
         try
         {
-            var result = await client.GetFromJsonAsync<ItemSearchResponse<ItemDTO>>($"https://localhost:7000/api/Items?pageNumber={pageNumber}&pageSize={pageSize}&searchQuery={searchQuery}&pageID={pageId}");
+            ItemSearchResponse<ItemDTO> result = await client.GetFromJsonAsync<ItemSearchResponse<ItemDTO>>($"https://localhost:7000/api/Items?pageNumber={pageNumber}&pageSize={pageSize}&searchQuery={searchQuery}&pageID={pageId}");
             if (items != null)
             {
-                //pageId = result.PageId;
                 items = result.Data.ToList();
                 pageState = 0;
                 message = "";
@@ -229,6 +231,7 @@
         }
     }
 
+    // Display Create Item Page
     private async Task CreateItem()
     {
         req = null;
@@ -236,6 +239,7 @@
         pageState = 3;
     }
 
+    // Create New Item
     private async Task CreateItem(ItemDTO createItem)
     {
         if (createItem.Name == null || createItem.Description == null || createItem.Rarity == null)
@@ -258,6 +262,7 @@
         }
     }
 
+    // Display Edit Item Page
     private async Task EditItem(int itemId)
     {
         try
@@ -281,6 +286,7 @@
         }
     }
 
+    // Save Edited Item
     private async Task EditItemSave(ItemDTO editItem)
     {
         if (editItem.Name == null || editItem.Description == null || editItem.Rarity == null)
@@ -302,27 +308,28 @@
         }
     }
 
+    // Delete Item
     private async Task DeleteItem(int itemId)
     {
         await client.DeleteAsync($"https://localhost:7000/api/Items/{itemId}");
         await ItemSearch();
     }
 
+    // Pagination (Previous)
     private async Task PreviousPage()
     {
         pageNumber--;
         await ItemSearch();
     }
+
+    // Pagination (Next)
     private async Task NextPage()
     {
         pageNumber++;
         await ItemSearch();
     }
 
-    private async Task GoToPage(int i)
-    {
-        // TODO: Implement go-to-page logic
-    }
+    // Return to Item Table Page
     private async Task Back()
     {
         pageState = 0;
