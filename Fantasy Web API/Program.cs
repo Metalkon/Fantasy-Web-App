@@ -1,6 +1,8 @@
 using Fantasy_Web_API.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Fantasy_Web_API
 {
@@ -9,12 +11,12 @@ namespace Fantasy_Web_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var configuration = builder.Configuration.GetSection("ConnectionStrings");
 
             // Add services to the container.
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                var configuration = builder.Configuration.GetSection("ConnectionStrings");
                 options.UseSqlServer(configuration["DefaultConnection"]);
             });
 
@@ -36,10 +38,10 @@ namespace Fantasy_Web_API
             {
                 x.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = config["JwtSettings:Issuer"],
-                    ValidAudience = config["JwtSettings:Audience"],
+                    ValidIssuer = configuration["JwtSettings:Issuer"],
+                    ValidAudience = configuration["JwtSettings:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey
-                    (Encoding.UTF8.GetBytes(config["JwtSettings:Key"]!)),
+                    (Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]!)),
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
