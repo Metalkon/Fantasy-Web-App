@@ -17,10 +17,12 @@ namespace Fantasy_Web_API.Controllers
         private readonly ApplicationDbContext _db;
         private IConfiguration _config;
 
-        public LoginController(ApplicationDbContext context)
+        public LoginController(ApplicationDbContext context, IConfiguration config)
         {
             _db = context;
+            _config = config;
         }
+
 
         // Handle user login and return a JWT token if authentication is successful.
         [AllowAnonymous] 
@@ -54,7 +56,7 @@ namespace Fantasy_Web_API.Controllers
         private string Generate(UserModel user)
         {
             // Set up security key for JWT signing
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]));
             // Set up signing credentials for the JWT
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -68,8 +70,8 @@ namespace Fantasy_Web_API.Controllers
 
             // Create a JWT containing the specified claims and signing credentials
 
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-              _config["Jwt:Audience"],
+            var token = new JwtSecurityToken(_config["JwtSettings:Issuer"],
+              _config["JwtSettings:Audience"],
               claims,
               expires: DateTime.Now.AddMinutes(15),
               signingCredentials: credentials);

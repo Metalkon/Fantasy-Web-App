@@ -7,15 +7,15 @@
             new UserModel()
             {
                 Username = "Metalkon",
-                Password = "password2",
-                EmailAddress = "metalkonsc@hotmail.com",
+                Password = "testpassword",
+                EmailAddress = "metalkon@example.com",
                 Role = "admin"
             },
             new UserModel()
             {
                 Username = "TestUser",
-                Password = "password1",
-                EmailAddress = "clanfirewing@yahoo.com",
+                Password = "passwordtest",
+                EmailAddress = "test@example.com",
                 Role = "user"
             }
         };

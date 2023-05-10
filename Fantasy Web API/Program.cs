@@ -11,13 +11,12 @@ namespace Fantasy_Web_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var configuration = builder.Configuration.GetSection("ConnectionStrings");
 
             // Add services to the container.
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(configuration["DefaultConnection"]);
+                options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
             });
 
             builder.Services.AddCors(opt => opt.AddDefaultPolicy(policy =>
@@ -38,15 +37,14 @@ namespace Fantasy_Web_API
             {
                 x.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = configuration["JwtSettings:Issuer"],
-                    ValidAudience = configuration["JwtSettings:Audience"],
+                    ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                    ValidAudience = builder.Configuration["JwtSettings:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey
-                    (Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]!)),
+                    (Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"])),
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true
-
                 };
             });
 
