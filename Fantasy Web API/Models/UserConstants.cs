@@ -9,15 +9,15 @@
             new UserModel()
             {
                 Username = "Metalkon",
-                Password = "testpassword",
-                EmailAddress = "metalkon@example.com",
+                PasswordHash = "testpassword",
+                Email = "metalkon@example.com",
                 Role = "admin"
             },
             new UserModel()
             {
                 Username = "TestUser",
-                Password = "passwordtest",
-                EmailAddress = "test@example.com",
+                PasswordHash = "passwordtest",
+                Email = "test@example.com",
                 Role = "user"
             }
         };

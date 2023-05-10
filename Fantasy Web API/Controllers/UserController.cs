@@ -16,7 +16,7 @@ namespace Fantasy_Web_API.Controllers
         public IActionResult IdentifyUser()
         {
             var currentUser = GetCurrentUser();
-            return Ok($"Greetings {currentUser.Username}, your role is \"{currentUser.Role}\", and your email is \"{currentUser.EmailAddress}\".");
+            return Ok($"Greetings {currentUser.Username}, your role is \"{currentUser.Role}\", and your email is \"{currentUser.Email}\".");
         }
 
         private UserModel GetCurrentUser()
@@ -28,7 +28,7 @@ namespace Fantasy_Web_API.Controllers
                 return new UserModel
                 {
                     Username = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.NameIdentifier)?.Value,
-                    EmailAddress = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Email)?.Value,
+                    Email = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Email)?.Value,
                     Role = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value
                 };
             }

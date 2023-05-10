@@ -44,7 +44,7 @@ namespace Fantasy_Web_API.Controllers
         private UserModel Authenticate(UserLogin userLogin)
         {
             // generate and return user object if user exists
-            var currentUser = UserConstants.Users.FirstOrDefault(o => o.Username.ToLower() == userLogin.Username.ToLower() && o.Password == userLogin.Password);
+            var currentUser = UserConstants.Users.FirstOrDefault(o => o.Username.ToLower() == userLogin.Username.ToLower() && o.PasswordHash == userLogin.Password);
             if (currentUser != null)
             {
                 return currentUser;
@@ -64,7 +64,7 @@ namespace Fantasy_Web_API.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Username),
-                new Claim(ClaimTypes.Email, user.EmailAddress),
+                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
