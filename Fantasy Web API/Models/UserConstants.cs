@@ -2,6 +2,8 @@
 {
     public class UserConstants
     {
+        // Temporary model for user accounts.
+
         public static List<UserModel> Users = new List<UserModel>()
         {
             new UserModel()
