@@ -1,4 +1,5 @@
 using Fantasy_Web_API.Data;
+using Fantasy_Web_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -26,6 +27,8 @@ namespace Fantasy_Web_API
                 policy.AllowAnyOrigin();
             })
             );
+
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
 
             // Jwt/Auth stuff
             builder.Services.AddAuthentication(x =>
