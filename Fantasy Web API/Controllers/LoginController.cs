@@ -3,9 +3,14 @@ using Fantasy_Web_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using Shared_Classes.Models;
 using System.Text;
 
 namespace Fantasy_Web_API.Controllers
@@ -23,13 +28,12 @@ namespace Fantasy_Web_API.Controllers
             _config = config;
         }
 
-
         // Handle user login and return a JWT token if authentication is successful.
         [AllowAnonymous] 
         [HttpPost]
-        public ActionResult Login([FromBody] UserLogin userLogin) // note: make a dto
+        public async Task<ActionResult<string>> Login([FromBody] UserLogin userLogin) // note: make a dto
         {
-            var user = Authenticate(userLogin);
+            var user = await Authenticate(userLogin);
 
             if (user != null)
             {
@@ -41,10 +45,10 @@ namespace Fantasy_Web_API.Controllers
         }
 
         // Authenticate the user and return their user object if they exist
-        private UserModel Authenticate(UserLogin userLogin)
+        private async Task<UserModel> Authenticate(UserLogin userLogin)
         {
             // generate and return user object if user exists
-            var currentUser = UserConstants.Users.FirstOrDefault(o => o.Username.ToLower() == userLogin.Username.ToLower() && o.Password == userLogin.Password);
+            var currentUser = await _db.Users.FirstOrDefaultAsync(x => x.Username.ToLower() == userLogin.Username.ToLower() && x.PasswordHash == userLogin.Password);
             if (currentUser != null)
             {
                 return currentUser;
@@ -64,7 +68,7 @@ namespace Fantasy_Web_API.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Username),
-                new Claim(ClaimTypes.Email, user.EmailAddress),
+                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
