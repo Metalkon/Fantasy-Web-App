@@ -1,5 +1,4 @@
 ﻿using Fantasy_Web_API.Data;
-using Fantasy_Web_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -12,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Shared_Classes.Models;
 using System.Text;
+using Fantasy_Web_API.Models;
+using Fantasy_Web_API.Services;
 
 namespace Fantasy_Web_API.Controllers
 {
@@ -21,67 +22,86 @@ namespace Fantasy_Web_API.Controllers
     {
         private readonly ApplicationDbContext _db;
         private IConfiguration _config;
+        private readonly IEmailSender _emailSender;
 
-        public LoginController(ApplicationDbContext context, IConfiguration config)
+        public LoginController(ApplicationDbContext context, IConfiguration config, IEmailSender emailSender)
         {
             _db = context;
             _config = config;
+            this._emailSender = emailSender;
         }
 
         // Handle user login and return a JWT token if authentication is successful.
-        [AllowAnonymous] 
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<ActionResult<string>> Login([FromBody] UserLogin userLogin) // note: make a dto
+        public async Task<ActionResult<string>> Login([FromBody] UserLogin userLogin)
         {
-            var user = await Authenticate(userLogin);
-
-            if (user != null)
+            if (!ModelState.IsValid || userLogin == null || string.IsNullOrEmpty(userLogin.Username) || string.IsNullOrEmpty(userLogin.Email))
+            {
+                return BadRequest("Invalid Email or Username");
+            }
+            UserModel user = await _db.Users.SingleOrDefaultAsync(x => x.Email.ToLower() == userLogin.Email.ToLower() && x.Username.ToLower() == userLogin.Username.ToLower());
+            if (user == null)
+            {
+                return NotFound("User Not Found");
+            }
+            // If no login code is provided by the user, send email with login code
+            if (string.IsNullOrEmpty(userLogin.LoginCode))
+            {
+                user.LoginCode = Guid.NewGuid().ToString();
+                user.LoginCodeExp = DateTime.UtcNow.AddMinutes(5);
+                await _db.SaveChangesAsync();
+                await SendEmailCode(user);
+                return Ok($"An Email has been sent to {userLogin.Email}");
+            }
+            // Wrong Token
+            if (userLogin.LoginCode != user.LoginCode)
+            {
+                return BadRequest("Invalid Token");
+            }
+            // Expired Login Token
+            if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp <= DateTime.UtcNow)
+            {
+                return BadRequest("Expired Token");
+            }
+            // Generate & Return JWT
+            if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp >= DateTime.UtcNow)
             {
                 var token = Generate(user);
                 return Ok(token);
             }
-
-            return NotFound("User not found");
-        }
-
-        // Authenticate the user and return their user object if they exist
-        private async Task<UserModel> Authenticate(UserLogin userLogin)
-        {
-            // generate and return user object if user exists
-            var currentUser = await _db.Users.FirstOrDefaultAsync(x => x.Username.ToLower() == userLogin.Username.ToLower() && x.PasswordHash == userLogin.Password);
-            if (currentUser != null)
-            {
-                return currentUser;
-            }
-            return null;
+            return BadRequest();
         }
 
         // Generate a JWT for the provided user object
         private string Generate(UserModel user)
         {
-            // Set up security key for JWT signing
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]));
-            // Set up signing credentials for the JWT
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            // Define the claims to be included in the JWT
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Username),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim("sub", user.Email), // set subject to user's email address
+                new Claim("username", user.Username), // add custom claim for user's name
+                new Claim("role", user.Role), // add custom claim for user's role
             };
 
-            // Create a JWT containing the specified claims and signing credentials
+            var token = new JwtSecurityToken(
+                issuer: _config["JwtSettings:Issuer"],
+                audience: _config["JwtSettings:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(15),
+                signingCredentials: credentials);
 
-            var token = new JwtSecurityToken(_config["JwtSettings:Issuer"],
-              _config["JwtSettings:Audience"],
-              claims,
-              expires: DateTime.Now.AddMinutes(15),
-              signingCredentials: credentials);
-
-            // Generate a JWT string
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private async Task SendEmailCode(UserModel currentUser)
+        {
+            var email = currentUser.Email;
+            var subject = "Fantasy Web App - Email Verification Code";
+            var message = $"5 Minute Login Code: {currentUser.LoginCode}";
+            var sendEmail = await _emailSender.SendEmailAsync(email, subject, message);
         }
     }
 }
