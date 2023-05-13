@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fantasy_Web_API.Models
 {
@@ -16,11 +17,13 @@ namespace Fantasy_Web_API.Models
         [Required]
         public string Role { get; set; }
         [Required]
-        public string PasswordHash { get; set; }
-        [Required]
-        public string PasswordSalt { get; set; }
-        [Required]
         public string AccountStatus { get; set; }
+        [Required]
+        public string LoginStatus { get; set; }
+        [Required]
+        public string LoginCode { get; set; }
+        [Required]
+        public DateTime LoginCodeExp { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
