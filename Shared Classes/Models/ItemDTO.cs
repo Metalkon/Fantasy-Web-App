@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Shared_Classes.Models
+﻿namespace Shared_Classes.Models
 {
     public class ItemDTO
     {

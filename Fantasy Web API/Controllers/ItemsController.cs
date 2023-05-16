@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Fantasy_Web_API.Data;
 using Fantasy_Web_API.Models;
 using Shared_Classes.Models;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Text.RegularExpressions;
 
 namespace Fantasy_Web_API.Controllers
@@ -24,51 +18,40 @@ namespace Fantasy_Web_API.Controllers
             _db = context;
         }
 
-        // Retrieves a list of "items" from the database as a JSON response.
+        // Retrieves a paginated list of "items" from the database as a JSON response.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ItemSearchResponse<ItemDTO>>>> GetItems(int pageNumber, int pageSize, string? searchQuery, int pageId)
         {
-            // Check for negative numbers
             if (pageNumber < 0 || pageSize < 0 || pageId < 0)
             {
                 return BadRequest();
             }
-
-            // Check for special characters in the searchQuery parameter
             if (searchQuery != null && !Regex.IsMatch(searchQuery, @"^[a-zA-Z0-9\s]+$"))
             {
                 return BadRequest();
             }
 
-            // Check & Set Page Number/Size
+            // Check Values, Set Minimums
             pageNumber = pageNumber <= 0 ? 1 : pageNumber;
             pageSize = pageSize <= 0 ? 10 : pageSize;
             pageSize = pageSize > 100 ? 100 : pageSize;
 
-            // Create the Queryable 
             IQueryable<Item> queryItem = _db.Items.AsQueryable();
 
-            // Add a filter for the pageId value
-            //queryItem = _db.Items.Where(item => item.Id > pageId);
-
-            // Null check and search for the name
+            // Search Query
             if (searchQuery != null)
             {
                 queryItem = queryItem.Where(item => item.Name.Contains(searchQuery));
             }
 
-            // Apply pagination
+            // Pagination
             queryItem = queryItem.Skip((pageNumber - 1) * pageSize).Take(pageSize);
 
-            // Retrieve items from the database
-            var items = await queryItem.ToListAsync();
-
+            List<Item> items = await queryItem.ToListAsync();
             if (items.Count == 0)
             {
                 return NotFound();
             }
-
-            // Convert each item in the original item list to a ItemDTO within another object, and setting PageId to the highest item.Id
             var result = new ItemSearchResponse<ItemDTO>
             {
                 PageId = items.Max(item => item.Id),
@@ -82,22 +65,28 @@ namespace Fantasy_Web_API.Controllers
                     Image = item.Image
                 }).ToList()
             };
-
             return Ok(result);
         }
-
-
 
         // Retrieves a single item by id as a JSON response.
         [HttpGet]
         [Route("{id}")]
         public async Task<ActionResult<ItemDTO>> GetItemById(int id)
         {
-            var result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
-            if (result == null)
+            Item itemGet = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            if (itemGet == null)
             {
                 return NotFound();
             }
+            var result = new ItemDTO()
+            {
+                Id = itemGet.Id,
+                Name = itemGet.Name,
+                Rarity = itemGet.Rarity,
+                Price = itemGet.Price,
+                Description = itemGet.Description,
+                Image = itemGet.Image
+            };
             return Ok(result);
         }
 
@@ -109,9 +98,21 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest();
             }
+
+            // Check Values, Set Defaults
+            item.Name = item.Name == null ? "Untitled" : item.Name;
+            item.Description = item.Description == null ? "N/A" : item.Description;
+            item.Price = item.Price == null ? 0 : item.Price;
+            item.Rarity = item.Rarity == null ? "Common" : item.Rarity;
+            item.Image = item.Image == null ? "./images/Icon/Question_Mark.jpg" : item.Image;
+
             var newItem = new Item()
             {
-                Name = item.Name
+                Name = item.Name,
+                Rarity = item.Rarity,
+                Price = (int)item.Price,
+                Description = item.Description,
+                Image = item.Image
             };
             _db.Items.Add(newItem);
             await _db.SaveChangesAsync();
@@ -128,7 +129,7 @@ namespace Fantasy_Web_API.Controllers
         [Route("{id}")]
         public async Task<ActionResult<ItemDTO>> DeleteItemById(int id)
         {
-            var result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
+            Item result = await _db.Items.FirstOrDefaultAsync(x => x.Id == id);
             if (result == null)
             {
                 return NotFound();
@@ -140,19 +141,32 @@ namespace Fantasy_Web_API.Controllers
 
         // Updates a single item entry by id.
         [HttpPut]
-        [Route("{id}")]
-        public async Task<ActionResult<ItemDTO>> UpdateItemById(int id, ItemDTO item)
+        public async Task<ActionResult<ItemDTO>> UpdateItemById(ItemDTO item)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
-            var existingItem = await _db.Items.FindAsync(id);
+            Item existingItem = await _db.Items.FindAsync(item.Id);
             if (existingItem == null)
             {
                 return NotFound();
             }
-            existingItem.Name = item.Name;
+
+            // Check Values, Set Defaults
+            item.Name = item.Name == null ? "Untitled" : item.Name;
+            item.Description = item.Description == null ? "N/A" : item.Description;
+            item.Price = item.Price == null ? 0 : item.Price;
+            item.Rarity = item.Rarity == null ? "Common" : item.Rarity;
+            item.Image = item.Image == null ? "./images/Icon/Question_Mark.jpg" : item.Image;
+
+            {
+                existingItem.Name = item.Name;
+                existingItem.Rarity = item.Rarity;
+                existingItem.Price = item.Price;
+                existingItem.Description = item.Description;
+                existingItem.Image = item.Image;
+            }
             await _db.SaveChangesAsync();
             var updatedItem = new ItemDTO()
             {
