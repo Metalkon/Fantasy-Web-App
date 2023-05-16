@@ -1,5 +1,9 @@
 using Fantasy_Web_API.Data;
+using Fantasy_Web_API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Fantasy_Web_API
 {
@@ -13,8 +17,7 @@ namespace Fantasy_Web_API
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                var configuration = builder.Configuration.GetSection("ConnectionStrings");
-                options.UseSqlServer(configuration["DefaultConnection"]);
+                options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
             });
 
             builder.Services.AddCors(opt => opt.AddDefaultPolicy(policy =>
@@ -24,6 +27,31 @@ namespace Fantasy_Web_API
                 policy.AllowAnyOrigin();
             })
             );
+
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+            // Jwt/Auth stuff
+            builder.Services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(x =>
+            {
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                    ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey
+                    (Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"])),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
+                };
+            });
+
+            builder.Services.AddAuthorization(); // *
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -41,7 +69,8 @@ namespace Fantasy_Web_API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization(); // *
 
             app.UseCors();
 
