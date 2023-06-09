@@ -49,7 +49,7 @@ namespace Fantasy_Web_API.Controllers
             if (string.IsNullOrEmpty(userLogin.LoginCode))
             {
                 user.LoginCode = Guid.NewGuid().ToString();
-                user.LoginCodeExp = DateTime.UtcNow.AddMinutes(5);
+                user.LoginCodeExp = DateTime.UtcNow.AddDays(7);
                 await _db.SaveChangesAsync();
                 await SendEmailCode(user);
                 return Ok($"An Email has been sent to {userLogin.Email}");
