@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace Fantasy_Web_API.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class ItemsController : ControllerBase
     {
