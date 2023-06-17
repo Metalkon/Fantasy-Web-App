@@ -34,7 +34,7 @@ namespace Fantasy_Web_API.Controllers
         // Handle user login and return a JWT token if authentication is successful.
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ActionResult<string>> Login([FromBody] UserLogin userLogin)
+        public async Task<ActionResult<string>> Login(UserLogin userLogin)
         {
             if (!ModelState.IsValid || userLogin == null || string.IsNullOrEmpty(userLogin.Username) || string.IsNullOrEmpty(userLogin.Email))
             {
@@ -49,7 +49,7 @@ namespace Fantasy_Web_API.Controllers
             if (string.IsNullOrEmpty(userLogin.LoginCode))
             {
                 user.LoginCode = Guid.NewGuid().ToString();
-                user.LoginCodeExp = DateTime.UtcNow.AddMinutes(5);
+                user.LoginCodeExp = DateTime.UtcNow.AddDays(7);
                 await _db.SaveChangesAsync();
                 await SendEmailCode(user);
                 return Ok($"An Email has been sent to {userLogin.Email}");
@@ -81,16 +81,16 @@ namespace Fantasy_Web_API.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim("sub", user.Email), // set subject to user's email address
-                new Claim("username", user.Username), // add custom claim for user's name
-                new Claim("role", user.Role), // add custom claim for user's role
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var token = new JwtSecurityToken(
                 issuer: _config["JwtSettings:Issuer"],
                 audience: _config["JwtSettings:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

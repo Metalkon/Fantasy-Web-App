@@ -1,8 +1,34 @@
 ﻿@page "/"
+<!-- for page view... attribute [Authorize](Roles = Admin) -->
 
 <PageTitle>Index</PageTitle>
 
 <h2 style="text-align:center;">Fantasy Blazor App</h2>
+
+<!-- Need to either avoid the identity stuff in authstateprovider and read the jwt directly for information, or generate identity claims in the jwt with the schemas link and such -->
+<!-- <AuthorizeView Roles="Admin""> -->
+<AuthorizeView>
+    <NotAuthorized>
+        <p style="text-align:center;">TEST: You are NOT Authorized</p>
+    </NotAuthorized>
+    <Authorized>
+        <p style="text-align:center;">TEST: You are Authorized (Username: @context.User.Identity.Name, Email: @context.User.Claims.FirstOrDefault(c => c.Type == "Email")?.Value)</p>
+    </Authorized>
+</AuthorizeView>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!--<div class="alert alert-warning" role="alert">
     Before authentication will function correctly, you must configure your provider details in <code>Program.cs</code>

@@ -7,6 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Pages\Components\**" />
+    <Content Remove="Pages\Components\**" />
+    <EmbeddedResource Remove="Pages\Components\**" />
+    <None Remove="Pages\Components\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Pages\Login.razor~RF7db6dc.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazored.LocalStorage" Version="4.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="6.0.16" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.13" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="6.0.13" />
@@ -14,10 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared Classes\Shared Classes.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Pages\Components\" />
   </ItemGroup>
 
 </Project>
