@@ -1,34 +1,82 @@
 ﻿@page "/Login"
-@inject HttpClient Http
+@inject HttpClient client
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage /* may need to use the sync version */
 
 <h3>Login</h3>
 <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-    <label style="margin-bottom: 5px; font-weight: bold;">Name:<span style="color: gray; font-size: 12px;"> (Required)</span></label>
+    <label style="margin-bottom: 5px; font-weight: bold;">Name:</label>
     <input type="text" style="width: 50%;" @bind-value="user.Username" />
 </div>
 <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-    <label style="margin-bottom: 5px; font-weight: bold;">Email:<span style="color: gray; font-size: 12px;"> (Required)</span></label>
+    <label style="margin-bottom: 5px; font-weight: bold;">Email:</label>
     <input type="text" style="width: 50%;" @bind-value="user.Email" />
 </div>
-<div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-    <label style="margin-bottom: 5px; font-weight: bold;">LoginCode:</label>
-    <input type="text" style="width: 50%;" @bind-value="user.LoginCode" />
+@if (sentCode == true)
+{
+    <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+        <label style="margin-bottom: 5px; font-weight: bold;">Login Code:</label>
+        <input type="text" style="width: 50%;" @bind-value="user.LoginCode" />
+    </div>
+    <button class="btn btn-primary" @onclick="@(() => HandleLogin(user))">Send Email Code</button>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="@(() => SendEmail(user))">Login</button>
+}
+<div>
+    <span style="color: red; font-size: 12px;">@message</span>
 </div>
-
-<button class="btn btn-primary" @onclick="@(() => HandleLogin(user))">Login</button>
 
 @code {
     UserLogin user = new UserLogin();
-    private string message = "default message";
-
+    private string message = string.Empty;
+    private bool sentCode = false;
 
     async Task HandleLogin(UserLogin user)
     {
-        var result = await Http.PostAsJsonAsync($"https://localhost:7000/user/Login", user);
-        var token = await result.Content.ReadAsStringAsync();
-        await LocalStorage.SetItemAsync("token", token);
-        await AuthStateProvider.GetAuthenticationStateAsync();
+        if (user.Username == null || user.Email == null || user.LoginCode == null)
+        {
+            message = "Please fill out all required input fields";
+        }
+        else
+        {
+            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Login", user);
+            if (result.IsSuccessStatusCode)
+            {
+                var token = await result.Content.ReadAsStringAsync(); // fix error where this becomes the email sent string or other errors
+                await LocalStorage.SetItemAsync("token", token);
+                await AuthStateProvider.GetAuthenticationStateAsync();
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                string error = await result.Content.ReadAsStringAsync();
+                message = $"ERROR: {error}";
+            }
+        }
+    }
+
+    async Task SendEmail(UserLogin user)
+    {
+        if (user.Username == null || user.Email == null)
+        {
+            message = "Please fill out all required input fields";
+        }
+        else
+        {
+            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Login", user);
+            if (result.IsSuccessStatusCode)
+            {
+                sentCode = true;
+                message = await result.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                string error = await result.Content.ReadAsStringAsync();
+                message = $"ERROR: {error}";
+            }
+        }
     }
 }

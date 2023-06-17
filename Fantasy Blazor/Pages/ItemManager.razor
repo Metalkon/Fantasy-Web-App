@@ -1,5 +1,6 @@
 ﻿@page "/ItemManager"
 @attribute [Authorize]
+@inject HttpClient client
 
 <h2 style="text-align:center; margin-bottom: 2%">Item Management Page</h2>
 
@@ -186,7 +187,6 @@
     private string req;
     private List<int> pageHistory = new List<int>();
     private List<ItemDTO> items = new List<ItemDTO>();
-    private HttpClient client = new HttpClient();
     private ItemDTO createItem = new ItemDTO();
     private ItemDTO editItem = new ItemDTO();
 
