@@ -92,8 +92,24 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest("Username Has Already Been Taken");
             }
+
+            // figure out how to save user data to memory for 5 minutes while waiting on the confirmation email is taking place
+            // if that proves to be an issue, apply the unconfirmed database user approach. Will look into caching and tasks/threads for saving to memory (timed).
+
+
             return Ok("no issues... yet");
         }
+
+        // Complete user registration
+        [AllowAnonymous]
+        [HttpPost("confirmation")]
+        public async Task<ActionResult<string>> Confirmation(UserRegister userRegister)
+        {
+            // confirmation url will redirect to the blazor confirmation page, which then on initialization sends the information to this api method
+            // after completing registration, return jwt to log the user in automatically.
+            return Ok("no issues... yet");
+        }
+
 
         // Generate a JWT for the provided user object
         private string Generate(UserModel user)
