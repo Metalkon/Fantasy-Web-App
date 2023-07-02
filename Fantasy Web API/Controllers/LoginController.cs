@@ -1,22 +1,19 @@
 ﻿using Fantasy_Web_API.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 using Shared_Classes.Models;
 using System.Text;
 using Fantasy_Web_API.Models;
 using Fantasy_Web_API.Services;
+using System.Text.RegularExpressions;
 
 namespace Fantasy_Web_API.Controllers
 {
-    [Route("user/[controller]")]
+    [Route("user")]
     [ApiController]
     public class LoginController : Controller
     {
@@ -33,10 +30,14 @@ namespace Fantasy_Web_API.Controllers
 
         // Handle user login and return a JWT token if authentication is successful.
         [AllowAnonymous]
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserLogin userLogin)
         {
-            if (!ModelState.IsValid || userLogin == null || string.IsNullOrEmpty(userLogin.Username) || string.IsNullOrEmpty(userLogin.Email))
+            if (!ModelState.IsValid || !Regex.IsMatch(userLogin.Username, @"^[a-zA-Z0-9\s]+$"))
+            {
+                return BadRequest("Invalid Input");
+            }
+            if (string.IsNullOrEmpty(userLogin.Username) || string.IsNullOrEmpty(userLogin.Email))
             {
                 return BadRequest("Invalid Email or Username");
             }
@@ -54,23 +55,44 @@ namespace Fantasy_Web_API.Controllers
                 await SendEmailCode(user);
                 return Ok($"An Email has been sent to {userLogin.Email}");
             }
-            // Wrong Token
+            // Login Code Checks & Jwt Generation
             if (userLogin.LoginCode != user.LoginCode)
             {
                 return BadRequest("Invalid Token");
             }
-            // Expired Login Token
             if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp <= DateTime.UtcNow)
             {
                 return BadRequest("Expired Token");
             }
-            // Generate & Return JWT
             if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp >= DateTime.UtcNow)
             {
                 var token = Generate(user);
                 return Ok(token);
             }
             return BadRequest();
+        }
+
+        // Handle user registration and send confirmation email
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<ActionResult<string>> Register(UserRegister userRegister)
+        {
+            if (!ModelState.IsValid || userRegister == null || string.IsNullOrEmpty(userRegister.Username) || string.IsNullOrEmpty(userRegister.Email))
+            {
+                return BadRequest("Invalid Email or Username");
+            }
+
+            bool checkUser = await _db.Users.AnyAsync(x => x.Email.ToLower() == userRegister.Email.ToLower() || x.UpdatedAt == DateTime.UtcNow.AddMinutes(-10));
+            if (checkUser == true)
+            {
+                return BadRequest("Email Has Already Been Taken");
+            }
+            bool checkUsername = await _db.Users.AnyAsync(x => x.Username.ToLower() == userRegister.Username.ToLower());
+            if (checkUsername == true)
+            {
+                return BadRequest("Username Has Already Been Taken");
+            }
+            return Ok("no issues... yet");
         }
 
         // Generate a JWT for the provided user object

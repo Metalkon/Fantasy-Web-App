@@ -1,0 +1,65 @@
+﻿@page "/Register"
+@inject HttpClient client
+
+<AuthorizeView>
+    <Authorized>
+        <!-- Content for authorized users -->
+        <p>You are already logged in.</p>
+    </Authorized>
+    <NotAuthorized>
+        @if (sentConfirmation == false)
+        {
+            <h3>Register</h3>
+            <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+                <label style="margin-bottom: 5px; font-weight: bold;">Name:</label>
+                <input type="text" style="width: 50%;" @bind-value="user.Username" />
+            </div>
+            <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+                <label style="margin-bottom: 5px; font-weight: bold;">Email:</label>
+                <input type="text" style="width: 50%;" @bind-value="user.Email" />
+            </div>
+
+            <button class="btn btn-primary" @onclick="@(() => SendConfirmation(user))">Login</button>
+
+            <div style="margin-bottom: 10px;">
+                <span style="color: red; font-size: 12px;">@message</span>
+            </div>
+        }
+        else
+        {
+            <h4 style="text-align:center;">A Confirmation Email Has Been Sent To:</h4>
+            <div>
+                <p style="text-align:center;">@user.Email</p>
+            </div>
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    UserRegister user = new UserRegister();
+    private string message = string.Empty;
+    private bool sentConfirmation = false;
+
+    async Task SendConfirmation(UserRegister user)
+    {
+
+        if (user.Username == null || user.Email == null)
+        {
+            message = "Please fill out all required input fields";
+        }
+        else
+        {
+            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/register", user);
+            if (result.IsSuccessStatusCode)
+            {
+                sentConfirmation = true;
+                message = await result.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                string error = await result.Content.ReadAsStringAsync();
+                message = $"ERROR: {error}";
+            }
+        }
+    }
+}

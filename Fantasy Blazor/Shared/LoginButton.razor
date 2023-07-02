@@ -8,6 +8,8 @@
     </Authorized>
     <NotAuthorized>
         <button @onclick="Login" class="btn btn-primary">Login</button>
+        <button @onclick="Register" class="btn btn-primary">Register</button>
+
     </NotAuthorized>
 </AuthorizeView>
 
@@ -16,7 +18,10 @@
     {
         NavigationManager.NavigateTo("login");
     }
-
+    void Register()
+    {
+        NavigationManager.NavigateTo("Register");
+    }
     async Task Logout()
     {
         await LocalStorage.RemoveItemAsync("token");
