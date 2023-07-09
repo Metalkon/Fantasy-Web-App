@@ -1,5 +1,9 @@
 ﻿@page "/Confirmation"
 @inject HttpClient client
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+
 
 <AuthorizeView>
     <Authorized>
@@ -7,59 +11,45 @@
         <p>You are already logged in.</p>
     </Authorized>
     <NotAuthorized>
-        @if (sentConfirmation == false)
-        {
-            <h3>Register</h3>
-            <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-                <label style="margin-bottom: 5px; font-weight: bold;">Name:</label>
-                <input type="text" style="width: 50%;" @bind-value="user.Username" />
-            </div>
-            <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-                <label style="margin-bottom: 5px; font-weight: bold;">Email:</label>
-                <input type="text" style="width: 50%;" @bind-value="user.Email" />
-            </div>
-
-            <button class="btn btn-primary" @onclick="@(() => SendConfirmation(user))">Login</button>
-
-            <div style="margin-bottom: 10px;">
-                <span style="color: red; font-size: 12px;">@message</span>
-            </div>
-        }
-        else
-        {
-            <h4 style="text-align:center;">A Confirmation Email Has Been Sent To:</h4>
-            <div>
-                <p style="text-align:center;">@user.Email</p>
-            </div>
-        }
+        <p>@message</p>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
     UserRegister user = new UserRegister();
-    private string message = string.Empty;
-    private bool sentConfirmation = false;
+    string message = null;
+    string code;
 
-    async Task SendConfirmation(UserRegister user)
+    protected override void OnInitialized()
     {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        user.Username = query["username"];
+        user.Email = query["email"];
+        code = query["code"];
+        base.OnInitialized();
+        SendConfirmation(user, code);
+    }
 
-        if (user.Username == null || user.Email == null)
+    async Task SendConfirmation(UserRegister user, string code)
+    {
+        UserConfirm userConfirm = new UserConfirm()
         {
-            message = "Please fill out all required input fields";
+            Code = code,
+            UserRegister = user
+        };
+        var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Confirmation", userConfirm);
+        if (result.IsSuccessStatusCode)
+        {
+            var token = await result.Content.ReadAsStringAsync();
+            await LocalStorage.SetItemAsync("token", token);
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            NavigationManager.NavigateTo("/");
         }
         else
         {
-            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/register", user);
-            if (result.IsSuccessStatusCode)
-            {
-                sentConfirmation = true;
-                message = await result.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                string error = await result.Content.ReadAsStringAsync();
-                message = $"ERROR: {error}";
-            }
+            string error = await result.Content.ReadAsStringAsync();
+            message = $"ERROR: {error}";
         }
     }
 }

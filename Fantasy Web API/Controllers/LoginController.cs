@@ -21,6 +21,10 @@ namespace Fantasy_Web_API.Controllers
         private IConfiguration _config;
         private readonly IEmailSender _emailSender;
 
+        // Allowed time to login/register before code/url expires
+        private int loginTime = 5;
+        private int registerTime = 15;
+
         public LoginController(ApplicationDbContext context, IConfiguration config, IEmailSender emailSender)
         {
             _db = context;
@@ -50,7 +54,7 @@ namespace Fantasy_Web_API.Controllers
             if (string.IsNullOrEmpty(userLogin.LoginCode))
             {
                 user.LoginCode = Guid.NewGuid().ToString();
-                user.LoginCodeExp = DateTime.UtcNow.AddDays(7);
+                user.LoginCodeExp = DateTime.UtcNow.AddMinutes(loginTime);
                 await _db.SaveChangesAsync();
                 await SendEmailCode(user);
                 return Ok($"An Email has been sent to {userLogin.Email}");
@@ -58,11 +62,11 @@ namespace Fantasy_Web_API.Controllers
             // Login Code Checks & Jwt Generation
             if (userLogin.LoginCode != user.LoginCode)
             {
-                return BadRequest("Invalid Token");
+                return BadRequest("Invalid Login Code");
             }
             if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp <= DateTime.UtcNow)
             {
-                return BadRequest("Expired Token");
+                return BadRequest("Expired Login Code");
             }
             if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp >= DateTime.UtcNow)
             {
@@ -86,9 +90,9 @@ namespace Fantasy_Web_API.Controllers
             // Generate/Update database entry if the user doesn't exist or is unconfirmed
             if (user == null || user.AccountStatus == "Unconfirmed") 
             { 
-                if (user != null && user.UpdatedAt == DateTime.UtcNow.AddMinutes(-5)) 
+                if (user != null && user.LoginCodeExp <= DateTime.UtcNow) 
                 {
-                    return BadRequest("[TemporaryMessage] Please don't spam registration");
+                    return BadRequest($"You are unable to attempt to register again right now, please try again in {registerTime} minutes");
                 }
                 if (user == null)
                 {
@@ -96,20 +100,23 @@ namespace Fantasy_Web_API.Controllers
                     {
                         Email = userRegister.Email,
                         Username = userRegister.Username,
-                        Role = "User",
+                        Role = "None",
                         LoginCode = Guid.NewGuid().ToString(),
                         CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow,
+                        LoginCodeExp = DateTime.UtcNow.AddMinutes(registerTime)
                     };
                     _db.Users.Add(user);
                 }
                 else
                 {
                     user.Username = userRegister.Username;
-                    user.Role = "User";
+                    user.Role = "None";
                     user.LoginCode = Guid.NewGuid().ToString();
                     user.CreatedAt = DateTime.UtcNow;
                     user.UpdatedAt = DateTime.UtcNow;
+                    user.LoginCodeExp = DateTime.UtcNow.AddMinutes(registerTime);
+
                 }
                 await _db.SaveChangesAsync();
                 await SendEmailRegister(user);
@@ -125,11 +132,31 @@ namespace Fantasy_Web_API.Controllers
         // Complete user registration
         [AllowAnonymous]
         [HttpPost("confirmation")]
-        public async Task<ActionResult<string>> Confirmation(UserRegister userRegister)
+        public async Task<ActionResult<string>> Confirmation(UserConfirm userConfirm)
         {
-            // confirmation url will redirect to the blazor confirmation page, which then on initialization sends the information to this api method
-            // after completing registration, return jwt to log the user in automatically.
-            return Ok("no issues... yet");
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+            UserModel user = await _db.Users.SingleOrDefaultAsync(x => x.Email.ToLower() == userConfirm.UserRegister.Email.ToLower());
+            if (user.LoginCodeExp <= DateTime.UtcNow)
+            {
+                return BadRequest("The time to confirm your email has expired, please try again");
+            }
+            // If user information matches with the database, validate account and login the user.
+            if (user.Email == userConfirm.UserRegister.Email && user.Username == userConfirm.UserRegister.Username && user.LoginCode == userConfirm.Code)
+            {
+                user.Role = "User";
+                user.AccountStatus = "Validated";
+                user.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                var token = Generate(user);
+                return Ok(token);
+            }
+            else 
+            {
+                return BadRequest("Invalid Confirmation Data");
+            }
         }
 
 
