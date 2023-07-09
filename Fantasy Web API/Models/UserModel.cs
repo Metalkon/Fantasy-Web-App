@@ -17,7 +17,7 @@ namespace Fantasy_Web_API.Models
         [Required]
         public string Role { get; set; } = "None";
         [Required]
-        public string AccountStatus { get; set; } = string.Empty;
+        public string AccountStatus { get; set; } = "Unconfirmed";
         [Required]
         public string LoginStatus { get; set; } = string.Empty;
         [Required]

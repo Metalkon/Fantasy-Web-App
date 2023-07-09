@@ -97,8 +97,6 @@ namespace Fantasy_Web_API.Controllers
                         Email = userRegister.Email,
                         Username = userRegister.Username,
                         Role = "User",
-                        AccountStatus = "Unconfirmed",
-                        LoginStatus = null,
                         LoginCode = Guid.NewGuid().ToString(),
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
@@ -109,8 +107,6 @@ namespace Fantasy_Web_API.Controllers
                 {
                     user.Username = userRegister.Username;
                     user.Role = "User";
-                    user.AccountStatus = "Unconfirmed";
-                    user.LoginStatus = null;
                     user.LoginCode = Guid.NewGuid().ToString();
                     user.CreatedAt = DateTime.UtcNow;
                     user.UpdatedAt = DateTime.UtcNow;
