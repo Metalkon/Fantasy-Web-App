@@ -37,43 +37,50 @@ namespace Fantasy_Web_API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserLogin userLogin)
         {
-            if (!ModelState.IsValid || !Regex.IsMatch(userLogin.Username, @"^[a-zA-Z0-9\s]+$"))
+            if (!ModelState.IsValid || string.IsNullOrEmpty(userLogin.Email))
             {
-                return BadRequest("Invalid Input");
-            }
-            if (string.IsNullOrEmpty(userLogin.Username) || string.IsNullOrEmpty(userLogin.Email))
-            {
-                return BadRequest("Invalid Email or Username");
+                return BadRequest("Invalid Email");
             }
             UserModel user = await _db.Users.SingleAsync(x => x.Email.ToLower() == userLogin.Email.ToLower());
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(user.Email) || user.AccountStatus == "Unconfirmed")
             {
                 return NotFound("User Not Found");
             }
-            // If no login code is provided by the user, send email with login code
-            if (string.IsNullOrEmpty(userLogin.LoginCode))
+            else
             {
                 user.LoginCode = Guid.NewGuid().ToString();
                 user.LoginCodeExp = DateTime.UtcNow.AddMinutes(loginTime);
                 await _db.SaveChangesAsync();
-                await SendEmailCode(user);
-                return Ok($"An Email has been sent to {userLogin.Email}");
+                await SendEmailLogin(user);
+                return Ok($"An Email to complete your login has been sent to {userLogin.Email}");
             }
-            // Login Code Checks & Jwt Generation
-            if (userLogin.LoginCode != user.LoginCode)
+        }
+
+        // Complete user login
+        [AllowAnonymous]
+        [HttpPost("login/confirmation")]
+        public async Task<ActionResult<string>> LoginConfirmation(LoginConfirm userConfirm)
+        {
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid Login Code");
+                return BadRequest("Invalid Request");
             }
-            if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp <= DateTime.UtcNow)
+            UserModel user = await _db.Users.SingleOrDefaultAsync(x => x.Email.ToLower() == userConfirm.UserLogin.Email.ToLower());
+            if (user.LoginCodeExp <= DateTime.UtcNow)
             {
-                return BadRequest("Expired Login Code");
+                return BadRequest("Your login code has expired, please try again");
             }
-            if (userLogin.LoginCode == user.LoginCode && user.LoginCodeExp >= DateTime.UtcNow)
+            // If user information matches with the database, return jwt to login the user.
+            if (user.Email == userConfirm.UserLogin.Email && user.Username == userConfirm.Username && user.LoginCode == userConfirm.Code)
             {
+                await _db.SaveChangesAsync();
                 var token = Generate(user);
                 return Ok(token);
             }
-            return BadRequest();
+            else
+            {
+                return BadRequest("Invalid Login Data");
+            }
         }
 
         // Handle user registration and send confirmation email
@@ -131,8 +138,8 @@ namespace Fantasy_Web_API.Controllers
 
         // Complete user registration
         [AllowAnonymous]
-        [HttpPost("confirmation")]
-        public async Task<ActionResult<string>> Confirmation(UserConfirm userConfirm)
+        [HttpPost("register/confirmation")]
+        public async Task<ActionResult<string>> RegisterConfirmation(RegisterConfirm userConfirm)
         {
             if (!ModelState.IsValid)
             {
@@ -165,35 +172,33 @@ namespace Fantasy_Web_API.Controllers
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role)
             };
-
             var token = new JwtSecurityToken(
                 issuer: _config["JwtSettings:Issuer"],
                 audience: _config["JwtSettings:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: credentials);
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private async Task SendEmailCode(UserModel currentUser)
+        private async Task SendEmailLogin(UserModel currentUser)
         {
             var subject = "Fantasy Web App - Login Verification Code";
-            var message = $"5 Minute Login Code: \n{currentUser.LoginCode}";
+            var message = $"5 Minute Login URL: \n" +
+                $"https://localhost:7001/login/confirmation?id={currentUser.Id}&username={currentUser.Username}&email={currentUser.Email}&code={currentUser.LoginCode}";
             var sendEmail = await _emailSender.SendEmailAsync(currentUser.Email, subject, message);
         }
         private async Task SendEmailRegister(UserModel currentUser)
         {
             var subject = "Fantasy Web App - Comfirm Registration";
             var message = $"5 Minute Registration URL: \n" +
-$"https://localhost:7001/confirmation?id={currentUser.Id}&username={currentUser.Username}&email={currentUser.Email}&code={currentUser.LoginCode}";
+                $"https://localhost:7001/register/confirmation?id={currentUser.Id}&username={currentUser.Username}&email={currentUser.Email}&code={currentUser.LoginCode}";
             var sendEmail = await _emailSender.SendEmailAsync(currentUser.Email, subject, message);
         }
     }

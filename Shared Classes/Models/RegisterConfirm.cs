@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Shared_Classes.Models
 {
-    public class UserConfirm
+    public class RegisterConfirm
     {
         public string Code { get; set; }
         public UserRegister UserRegister { get; set; }
