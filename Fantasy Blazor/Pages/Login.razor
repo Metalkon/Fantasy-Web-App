@@ -15,10 +15,7 @@
             <label style="margin-bottom: 5px; font-weight: bold;">Email:</label>
             <input type="text" style="width: 50%;" @bind-value="user.Email" />
         </div>
-        else
-        {
-            <button class="btn btn-primary" @onclick="@(() => SendEmail(user))">Login</button>
-        }
+        <button class="btn btn-primary" @onclick="@(() => SendEmail(user))">Login</button>
         <div style="margin-bottom: 10px;">
             <span style="color: red; font-size: 12px;">@message</span>
         </div>
