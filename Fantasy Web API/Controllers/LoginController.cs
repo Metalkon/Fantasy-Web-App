@@ -41,7 +41,7 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest("Invalid Email or Username");
             }
-            UserModel user = await _db.Users.SingleOrDefaultAsync(x => x.Email.ToLower() == userLogin.Email.ToLower() && x.Username.ToLower() == userLogin.Username.ToLower());
+            UserModel user = await _db.Users.SingleAsync(x => x.Email.ToLower() == userLogin.Email.ToLower());
             if (user == null)
             {
                 return NotFound("User Not Found");
@@ -81,23 +81,49 @@ namespace Fantasy_Web_API.Controllers
             {
                 return BadRequest("Invalid Email or Username");
             }
+            UserModel user = await _db.Users.SingleOrDefaultAsync(x => x.Email.ToLower() == userRegister.Email.ToLower());
 
-            bool checkUser = await _db.Users.AnyAsync(x => x.Email.ToLower() == userRegister.Email.ToLower() || x.UpdatedAt == DateTime.UtcNow.AddMinutes(-10));
-            if (checkUser == true)
-            {
-                return BadRequest("Email Has Already Been Taken");
+            // Generate/Update database entry if the user doesn't exist or is unconfirmed
+            if (user == null || user.AccountStatus == "Unconfirmed") 
+            { 
+                if (user != null && user.UpdatedAt == DateTime.UtcNow.AddMinutes(-5)) 
+                {
+                    return BadRequest("[TemporaryMessage] Please don't spam registration");
+                }
+                if (user == null)
+                {
+                    user = new UserModel()
+                    {
+                        Email = userRegister.Email,
+                        Username = userRegister.Username,
+                        Role = "User",
+                        AccountStatus = "Unconfirmed",
+                        LoginStatus = null,
+                        LoginCode = Guid.NewGuid().ToString(),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Users.Add(user);
+                }
+                else
+                {
+                    user.Username = userRegister.Username;
+                    user.Role = "User";
+                    user.AccountStatus = "Unconfirmed";
+                    user.LoginStatus = null;
+                    user.LoginCode = Guid.NewGuid().ToString();
+                    user.CreatedAt = DateTime.UtcNow;
+                    user.UpdatedAt = DateTime.UtcNow;
+                }
+                await _db.SaveChangesAsync();
+                await SendEmailRegister(user);
+                return Ok($"A confirmation email has been sent to {user.Email}");
             }
-            bool checkUsername = await _db.Users.AnyAsync(x => x.Username.ToLower() == userRegister.Username.ToLower());
-            if (checkUsername == true)
+            if (userRegister.Email == user.Email || userRegister.Username == user.Username)
             {
-                return BadRequest("Username Has Already Been Taken");
+                return BadRequest("Email or Username Has Already Been Taken");
             }
-
-            // figure out how to save user data to memory for 5 minutes while waiting on the confirmation email is taking place
-            // if that proves to be an issue, apply the unconfirmed database user approach. Will look into caching and tasks/threads for saving to memory (timed).
-
-
-            return Ok("no issues... yet");
+            return BadRequest();
         }
 
         // Complete user registration
@@ -136,10 +162,16 @@ namespace Fantasy_Web_API.Controllers
 
         private async Task SendEmailCode(UserModel currentUser)
         {
-            var email = currentUser.Email;
-            var subject = "Fantasy Web App - Email Verification Code";
-            var message = $"5 Minute Login Code: {currentUser.LoginCode}";
-            var sendEmail = await _emailSender.SendEmailAsync(email, subject, message);
+            var subject = "Fantasy Web App - Login Verification Code";
+            var message = $"5 Minute Login Code: \n{currentUser.LoginCode}";
+            var sendEmail = await _emailSender.SendEmailAsync(currentUser.Email, subject, message);
+        }
+        private async Task SendEmailRegister(UserModel currentUser)
+        {
+            var subject = "Fantasy Web App - Comfirm Registration";
+            var message = $"5 Minute Registration URL: \n" +
+$"https://localhost:7001/confirmation?id={currentUser.Id}&username={currentUser.Username}&email={currentUser.Email}&code={currentUser.LoginCode}";
+            var sendEmail = await _emailSender.SendEmailAsync(currentUser.Email, subject, message);
         }
     }
 }
