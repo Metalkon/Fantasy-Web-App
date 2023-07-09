@@ -74,7 +74,7 @@
         }
         else
         {
-            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Login", user);
+            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/login", user);
             if (result.IsSuccessStatusCode)
             {
                 sentCode = true;

@@ -1,0 +1,55 @@
+﻿@page "/Confirmation"
+@inject HttpClient client
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<AuthorizeView>
+    <Authorized>
+        <!-- Content for authorized users -->
+        <p>You are already logged in.</p>
+    </Authorized>
+    <NotAuthorized>
+        <p>@message</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    UserRegister user = new UserRegister();
+    string message = null;
+    string code;
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        user.Username = query["username"];
+        user.Email = query["email"];
+        code = query["code"];
+        base.OnInitialized();
+        SendConfirmation(user, code);
+    }
+
+    async Task SendConfirmation(UserRegister user, string code)
+    {
+        UserConfirm userConfirm = new UserConfirm()
+        {
+            Code = code,
+            UserRegister = user
+        };
+        var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Confirmation", userConfirm);
+        if (result.IsSuccessStatusCode)
+        {
+            var token = await result.Content.ReadAsStringAsync();
+            await LocalStorage.SetItemAsync("token", token);
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            string error = await result.Content.ReadAsStringAsync();
+            message = $"ERROR: {error}";
+        }
+    }
+}
