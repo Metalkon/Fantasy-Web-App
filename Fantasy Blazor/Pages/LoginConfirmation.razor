@@ -1,4 +1,4 @@
-﻿@page "/Confirmation"
+﻿@page "/Login/Confirmation"
 @inject HttpClient client
 @inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorage
@@ -16,29 +16,31 @@
 </AuthorizeView>
 
 @code {
-    UserRegister user = new UserRegister();
     string message = null;
-    string code;
 
     protected override void OnInitialized()
     {
         var uri = new Uri(NavigationManager.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        user.Username = query["username"];
-        user.Email = query["email"];
-        code = query["code"];
+        var username = query["username"];
+        var email = query["email"];
+        var code = query["code"];
         base.OnInitialized();
-        SendConfirmation(user, code);
+        SendConfirmation(username, email, code);
     }
 
-    async Task SendConfirmation(UserRegister user, string code)
+    async Task SendConfirmation(string user, string email, string code)
     {
-        UserConfirm userConfirm = new UserConfirm()
+        LoginConfirm userConfirm = new LoginConfirm()
         {
             Code = code,
-            UserRegister = user
+            Username = user,
+            UserLogin = new UserLogin()
+            {
+                Email = email
+            }
         };
-        var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Confirmation", userConfirm);
+        var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Login/Confirmation", userConfirm);
         if (result.IsSuccessStatusCode)
         {
             var token = await result.Content.ReadAsStringAsync();

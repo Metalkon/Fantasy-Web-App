@@ -12,21 +12,9 @@
     <NotAuthorized>
         <h3>Login</h3>
         <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-            <label style="margin-bottom: 5px; font-weight: bold;">Name:</label>
-            <input type="text" style="width: 50%;" @bind-value="user.Username" />
-        </div>
-        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
             <label style="margin-bottom: 5px; font-weight: bold;">Email:</label>
             <input type="text" style="width: 50%;" @bind-value="user.Email" />
         </div>
-        @if (sentCode == true)
-        {
-            <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-                <label style="margin-bottom: 5px; font-weight: bold;">Login Code:</label>
-                <input type="text" style="width: 50%;" @bind-value="user.LoginCode" />
-            </div>
-            <button class="btn btn-primary" @onclick="@(() => HandleLogin(user))">Send Email Code</button>
-        }
         else
         {
             <button class="btn btn-primary" @onclick="@(() => SendEmail(user))">Login</button>
@@ -42,35 +30,11 @@
     private string message = string.Empty;
     private bool sentCode = false;
 
-    async Task HandleLogin(UserLogin user)
-    {
-        if (user.Username == null || user.Email == null || user.LoginCode == null)
-        {
-            message = "Please fill out all required input fields";
-        }
-        else
-        {
-            var result = await client.PostAsJsonAsync($"https://localhost:7000/user/Login", user);
-            if (result.IsSuccessStatusCode)
-            {
-                var token = await result.Content.ReadAsStringAsync();
-                await LocalStorage.SetItemAsync("token", token);
-                await AuthStateProvider.GetAuthenticationStateAsync();
-                NavigationManager.NavigateTo("/");
-            }
-            else
-            {
-                string error = await result.Content.ReadAsStringAsync();
-                message = $"ERROR: {error}";
-            }
-        }
-    }
-
     async Task SendEmail(UserLogin user)
     {
-        if (user.Username == null || user.Email == null)
+        if (string.IsNullOrEmpty(user.Email))
         {
-            message = "Please fill out all required input fields";
+            message = "Please fill out the required email field";
         }
         else
         {
